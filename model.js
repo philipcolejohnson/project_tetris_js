@@ -24,22 +24,28 @@ TETRIS.game = {
   },
 
   movePiece: function() {
-      for(var i = 0; i< game.current_piece.length; i++) {
-        game.current_piece[i][0] += 1;
+      for(var i = 0; i< TETRIS.game.current_piece.length; i++) {
+        TETRIS.game.current_piece[i][0] += 1;
       }
   },
 
   getCurrentState: function() {
     var tempBoard = TETRIS.game.board;
-    for (var i = 0; i < game.current_piece.length; i++) {
-      tempBoard
+    for (var i = 0; i < TETRIS.game.current_piece.blocks.length; i++) {
+      var row = TETRIS.game.current_piece.blocks[i][0];
+      var col = TETRIS.game.current_piece.blocks[i][1];
+      tempBoard[row][col] = TETRIS.game.current_piece.color;
     }
-
     return tempBoard;
+
+  },
+
+  tic: function(){
+    this.movePiece();
   },
 
   current_piece: {
-    color: 1,
+    color: "orange",
     blocks: [ [0,3], [0,4], [0,5] ]
   }
 
