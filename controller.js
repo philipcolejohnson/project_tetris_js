@@ -12,8 +12,8 @@ TETRIS.controller = {
   }
 
 
-}
+};
 
 $('document').ready(function(){
   TETRIS.controller.play();
-})
+});
