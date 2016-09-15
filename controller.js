@@ -1,4 +1,5 @@
 var TETRIS = TETRIS || {};
+INTERVAL = 500;
 
 TETRIS.controller = {
 
@@ -8,7 +9,11 @@ TETRIS.controller = {
     setInterval( function(){
       TETRIS.game.tic();
       TETRIS.view.render(TETRIS.game.getCurrentState());
-    }, 1000);
+    }, INTERVAL);
+  },
+
+  keyListener: function(event) {
+    TETRIS.game.userMove(event.which);
   }
 
 
