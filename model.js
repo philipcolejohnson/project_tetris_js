@@ -16,8 +16,8 @@ SHAPES = [
   [[3,0], [2,0], [2,1], [1,1]], // ZIG WITH RIGHT SIDE UP 
   [[3,0], [2,0], [2,1], [3,1]], // SQUARE
   [[3,0], [2,0], [1,0], [1,1]], // L RIGHT
-  [[3,1], [2,1], [1,1], [1,0]], // L LEFT  
-]
+  [[3,1], [2,1], [1,1], [1,0]] // L LEFT  
+];
 
 // model
 //  gameboard = nested array that adds set pieces as they are set
@@ -43,39 +43,57 @@ TETRIS.game = {
   createPiece: function() {
     this.current_piece.color = COLORS[Math.floor(Math.random() * COLORS.length)];
     this.current_piece.blocks = TETRIS.game.findShape();
+    console.log(this.current_piece.blocks)
   },
 
   findShape: function(){
-    var shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-    return shape;
+    var shape =  SHAPES[Math.floor(Math.random() * SHAPES.length)];
+    var piece = [];
+    var block;
+
+    for (var i = 0; i < shape.length; i++) {
+      block = [];
+      for (var j = 0; j < shape[i].length; j++){
+        block.push(shape[i][j]);
+      }
+      piece.push(block);
+    }
+
+    console.log("SHAPE: " + shape)
+    return piece;
   },
 
 
   userMove: function(keycode) {
     console.log(keycode);
     if (keycode === 37) {
-      console.log(TETRIS.game.moveLaterally(-1))
+      TETRIS.game.moveLaterally(-1);
 
     } else if (keycode === 39) {
-      TETRIS.game.moveLaterally(1)
+      TETRIS.game.moveLaterally(1);
     } else if (keycode === 40) {
       TETRIS.game.dropPiece();
     }
   },
 
   moveLaterally: function(direction) {
-    var current_blocks = TETRIS.game.current_piece.blocks
-    for(i = 0; i < current_blocks.length; i++) {
-      var newCol = current_blocks[i][1] + direction
+    var current_blocks = TETRIS.game.current_piece.blocks;
+    for(var i = 0; i < current_blocks.length; i++) {
+      var newCol = current_blocks[i][1] + direction;
       var pieceRow = current_blocks[i][0]
       if (newCol >= BOARD_WIDTH || newCol < 0 ){
         return false;
       } else if (TETRIS.game.board[pieceRow][newCol]) {
-        for (j = 0; j < current_blocks.length; j++) {
-          if (current_blocks[j][0] !== pieceRow && current_blocks[j][1] !== newCol) {
+          var currentPiece = false;
+          for (var j = 0; j < current_blocks.length; j++) {
+            if ((current_blocks[j][0] === pieceRow) && 
+                (current_blocks[j][1] === newCol)){
+              currentPiece = true;
+            } 
+          }
+          if (!currentPiece) {
             return false;
           }
-        }
       }
     }
     for(var k = 0; k < TETRIS.game.current_piece.blocks.length; k++) {
@@ -86,7 +104,6 @@ TETRIS.game = {
     for(i = 0; i < current_blocks.length; i++) {
       current_blocks[i][1] += direction;
     }
-    console.log(current_blocks);
     return true;
   },
 
@@ -108,11 +125,11 @@ TETRIS.game = {
       }
 
       for(i = 0; i < TETRIS.game.current_piece.blocks.length; i++) {
-        row = TETRIS.game.current_piece.blocks[i][0];
-        col = TETRIS.game.current_piece.blocks[i][1];
+        var row = TETRIS.game.current_piece.blocks[i][0];
+        var col = TETRIS.game.current_piece.blocks[i][1];
         TETRIS.game.board[row][col] = TETRIS.game.current_piece.color;
       } 
-      console.log("Once?");
+      console.log("still moving")
       return true;
     } else {
       TETRIS.game.createPiece();
@@ -122,22 +139,23 @@ TETRIS.game = {
   },
 
   noCollision: function() {
-    var current_blocks = TETRIS.game.current_piece.blocks
-    for(i = 0; i < current_blocks.length; i++) {
+    var current_blocks = TETRIS.game.current_piece.blocks;
+    for(var i = 0; i < current_blocks.length; i++) {
       var new_row = current_blocks[i][0] + 1;
       var col = current_blocks[i][1];
 
       if (new_row === BOARD_HEIGHT){
         return false;
       } else if (TETRIS.game.board[new_row][col]) {
-          for (j = 0; j < current_blocks.length; j++) {
+          var currentPiece = false;
+          for (var j = 0; j < current_blocks.length; j++) {
             if ((current_blocks[j][0] === new_row) && 
                 (current_blocks[j][1] === col)){
-              console.log("Happens before first move?")
-              continue;
-            } else {
-              return false;
-            }
+              currentPiece = true;
+            } 
+          }
+          if (!currentPiece) {
+            return false;
           }
       }
     }
