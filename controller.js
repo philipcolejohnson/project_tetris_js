@@ -8,7 +8,7 @@ TETRIS.controller = {
     TETRIS.game.init();
     setInterval( function(){
       TETRIS.game.tic();
-      TETRIS.view.render(TETRIS.game.getCurrentState());
+      TETRIS.view.render(TETRIS.game.board, TETRIS.game.current_piece);
     }, INTERVAL);
   },
 
