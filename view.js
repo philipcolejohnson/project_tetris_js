@@ -8,7 +8,7 @@ TETRIS.view = {
     $(document).on('keydown', TETRIS.controller.keyListener);
   },
 
-  render: function(board, piece){
+  render: function(board, piece, color){
     $board = $('#board');
     $board.html("");
 
@@ -20,15 +20,38 @@ TETRIS.view = {
         if (board[row][col]) {
           cell.css('background-color', board[row][col]);
         } else {
-          for (var block = 0; block < piece.blocks.length; block++) {
-            if (piece.blocks[block][0] === row && piece.blocks[block][1] === col) {
-              cell.css('background-color', piece.color);
+          for (var block = 0; block < piece.length; block++) {
+            if (piece[block][0] === row && piece[block][1] === col) {
+              cell.css('background-color', color);
             }
           }
         }
 
       }
     }
+
+    $board.append( $('<p>ROWS: ' + TETRIS.game.score + '</p>') );
+
+    //draw next pieces
+
+    // $next = $('#next-pieces');
+    // $next.html("");
+    // nextPieces = TETRIS.game.nextPieces;
+    // for (var i = 0; i < nextPieces.length; i++ ){
+
+    //   for (var row = 0; row < 4; row++) {
+    //     for (var col = 0; col < 4; col++){
+    //       var cell = $('<div class="cell"></div>');
+    //       $next.append(cell);
+
+    //       for (var block = 0; block < nextPieces.length; block++) {
+    //           if (nextPieces[block][0] === row && nextPieces[block][1] === col) {
+    //             cell.css('background-color', color);
+    //           }
+    //       }
+    //     }
+    //   }
+    // }
 
   }
 

@@ -2,6 +2,7 @@ var TETRIS = TETRIS || {};
 
 BOARD_WIDTH = 10;
 BOARD_HEIGHT = 20 + 4;
+STARTING_THRESHOLD = 200;
 COLORS = [
   "red",
   "green",
@@ -10,26 +11,16 @@ COLORS = [
   "yellow",
   "purple"
 ];
-SHAPES = [
-  [[3,0], [3,1], [3,2], [3,3]], // FOUR ACROSS
-  [[1,0], [2,0], [2,1], [3,1]], // ZIG WITH LEFT SIDE UP
-  [[3,0], [2,0], [2,1], [1,1]], // ZIG WITH RIGHT SIDE UP 
-  [[3,0], [2,0], [2,1], [3,1]], // SQUARE
-  [[3,0], [2,0], [1,0], [1,1]], // L RIGHT
-  [[3,1], [2,1], [1,1], [1,0]] // L LEFT  
-];
-
-// model
-//  gameboard = nested array that adds set pieces as they are set
-//  current_piece = array of coordinates [[[1,2][1,3][1,4]], orange]
-//  
-//  
 
 TETRIS.game = {
 
   init: function() {
     this.createBoard();
-    this.createPiece();
+    this.current_piece = new TETRIS.game.createPiece();
+    this.threshold = STARTING_THRESHOLD;
+    this.score = 0;
+    this.nextPieces = [];
+    TETRIS.game.createPieceList(3);
   },
 
   createBoard: function(){
@@ -41,26 +32,76 @@ TETRIS.game = {
   },
 
   createPiece: function() {
-    this.current_piece.color = TETRIS.game.getRandomColor();  //COLORS[Math.floor(Math.random() * COLORS.length)];
-    this.current_piece.blocks = TETRIS.game.findShape();
-    console.log(this.current_piece.blocks);
+    this.color = TETRIS.game.getRandomColor();  //COLORS[Math.floor(Math.random() * COLORS.length)];
+    // this.current_piece.blocks = TETRIS.game.findShape();
+    this.counter = 0;
+
+    TETRIS.game.pieceStartingConditions(this);
+
+    this.rotate = function(direction) {
+      if (TETRIS.game.noCollision(0, 0, direction)) {
+        this.rotation = TETRIS.game.getRotationIndex(direction);
+      }
+    };
   },
 
-  findShape: function(){
-    var shape =  SHAPES[Math.floor(Math.random() * SHAPES.length)];
-    var piece = [];
-    var block;
+  createPieceList: function(numPieces) {
+    TETRIS.game.nextPieces = [];
+    for (var i = 0; i < numPieces; i++) {
+      TETRIS.game.nextPieces.push( new TETRIS.game.createPiece() );
+    }
+  },
 
-    for (var i = 0; i < shape.length; i++) {
-      block = [];
-      for (var j = 0; j < shape[i].length; j++){
-        block.push(shape[i][j]);
-      }
-      piece.push(block);
+  pieceStartingConditions: function(piece) {
+    piece.shape = TETRIS.game.findShape();
+    piece.rotation = TETRIS.game.findRotation(piece);
+    piece.row = FIRST_VISIBLE_ROW - SHAPES[piece.shape][piece.rotation].length;
+    piece.col = Math.floor(Math.random() * (BOARD_WIDTH - SHAPES[piece.shape].length));
+  },
+
+  translateShape: function(x, y, rot) {
+    var rotationIndex;
+
+    if (rot) {
+      rotationIndex = TETRIS.game.getRotationIndex(rot);
+    } else {
+      rotationIndex = TETRIS.game.current_piece.rotation;
     }
 
-    console.log("SHAPE: " + shape)
+    var shape = SHAPES[TETRIS.game.current_piece.shape][rotationIndex];
+    var piece = [];
+
+    var pieceRow = x,
+        pieceCol = y;
+
+    for (var row = 0; row < shape.length; row++) {
+      for (var col = 0; col < shape[row].length; col++){
+        if (shape[row][col]) {
+          piece.push([pieceRow + row, pieceCol + col]);
+        }
+      }
+    }
+
     return piece;
+  },
+
+  findShape: function() {
+    return Math.floor(Math.random() * SHAPES.length);
+  },
+
+  findRotation: function(piece) {
+    return Math.floor(Math.random() * SHAPES[piece.shape].length);
+  },
+
+  getRotationIndex: function(direction) {
+    var numRotations = SHAPES[TETRIS.game.current_piece.shape].length;
+    var rot = TETRIS.game.current_piece.rotation;
+
+    if (rot + direction >= 0) {
+        return (rot + direction) % numRotations;
+    } else {
+      return rot + direction + numRotations;
+    }
   },
 
 
@@ -72,39 +113,29 @@ TETRIS.game = {
     } else if (keycode === 39) {
       TETRIS.game.moveLaterally(1);
     } else if (keycode === 40) {
+      TETRIS.game.movePieceDownOne();
+      TETRIS.game.movePieceDownOne();
+    }
+    else if (keycode === 32) {
       TETRIS.game.dropPiece();
+    }
+    else if (keycode === 38) {
+      TETRIS.game.current_piece.rotate(1);
+    }
+    else if (keycode === 90) {
+      TETRIS.game.current_piece.rotate(-1);
     }
   },
 
   moveLaterally: function(direction) {
-    var current_blocks = TETRIS.game.current_piece.blocks;
-    for(var i = 0; i < current_blocks.length; i++) {
-      var newCol = current_blocks[i][1] + direction;
-      var pieceRow = current_blocks[i][0];
-      if (newCol >= BOARD_WIDTH || newCol < 0 ){
-        return false;
-      } else if (TETRIS.game.board[pieceRow][newCol]) {
-          var currentPiece = false;
-          for (var j = 0; j < current_blocks.length; j++) {
-            if ((current_blocks[j][0] === pieceRow) && 
-                (current_blocks[j][1] === newCol)){
-              currentPiece = true;
-            } 
-          }
-          if (!currentPiece) {
-            return false;
-          }
-      }
+    var current_blocks = TETRIS.game.translateShape(TETRIS.game.current_piece.row + direction, TETRIS.game.current_piece.col);
+
+    if (TETRIS.game.noCollision(0, direction) ) {
+      TETRIS.game.current_piece.col += direction;
+      return true;
+    } else {
+      return false;
     }
-    for(var k = 0; k < TETRIS.game.current_piece.blocks.length; k++) {
-        var row = TETRIS.game.current_piece.blocks[k][0];
-        var col = TETRIS.game.current_piece.blocks[k][1];
-        TETRIS.game.board[row][col] = undefined;
-      }   
-    for(i = 0; i < current_blocks.length; i++) {
-      current_blocks[i][1] += direction;
-    }
-    return true;
   },
 
   dropPiece: function(){
@@ -113,70 +144,54 @@ TETRIS.game = {
 
   movePieceDownOne: function() {     
 
-    if (TETRIS.game.noCollision()) {
-
-      for(i = 0; i < TETRIS.game.current_piece.blocks.length; i++) {
-        TETRIS.game.current_piece.blocks[i][0] += 1;
-      }
-
+    if (TETRIS.game.noCollision(1, 0)) {
+      TETRIS.game.current_piece.row += 1;
       return true;
     } else {
       TETRIS.game.setPiece();
-      TETRIS.game.createPiece();
+      if ( !TETRIS.game.checkForLoss() ) {
+        TETRIS.game.current_piece = TETRIS.game.nextPieces.pop();
+        TETRIS.game.nextPieces.unshift( new TETRIS.game.createPiece() );
+      } else {
+        TETRIS.game.over();
+      }
       return false;
     }
 
   },
 
   setPiece: function() {
-    for(i = 0; i < TETRIS.game.current_piece.blocks.length; i++) {
-      var row = TETRIS.game.current_piece.blocks[i][0];
-      var col = TETRIS.game.current_piece.blocks[i][1];
+    var current_blocks = TETRIS.game.translateShape(TETRIS.game.current_piece.row, TETRIS.game.current_piece.col);
+
+    for(i = 0; i < current_blocks.length; i++) {
+      var row = current_blocks[i][0];
+      var col = current_blocks[i][1];
       TETRIS.game.board[row][col] = TETRIS.game.current_piece.color;
     } 
   },
 
-  noCollision: function() {
-    var current_blocks = TETRIS.game.current_piece.blocks;
+  noCollision: function(row, col, rot) {
+    var current_blocks = TETRIS.game.translateShape(TETRIS.game.current_piece.row + row, TETRIS.game.current_piece.col + col, rot);
+
     for(var i = 0; i < current_blocks.length; i++) {
-      var new_row = current_blocks[i][0] + 1;
+      var row = current_blocks[i][0];
       var col = current_blocks[i][1];
 
-      if (new_row === BOARD_HEIGHT){
+      if (col >= BOARD_WIDTH || col < 0 || row === BOARD_HEIGHT || TETRIS.game.board[row][col]) {
         return false;
-      } else if (TETRIS.game.board[new_row][col]) {
-          var currentPiece = false;
-          for (var j = 0; j < current_blocks.length; j++) {
-            if ((current_blocks[j][0] === new_row) && 
-                (current_blocks[j][1] === col)){
-              currentPiece = true;
-            } 
-          }
-          if (!currentPiece) {
-            return false;
-          }
-      }
+      } 
     }
     return true;
   },
 
-  getCurrentState: function() {
-    // var tempBoard = TETRIS.game.board.slice(0);
-    // for (var i = 0; i < current_blocks.length; i++) {
-    //   var row = TETRIS.game.current_piece.blocks[i][0];
-    //   var col = TETRIS.game.current_piece.blocks[i][1];
-    //   tempBoard[row][col] = TETRIS.game.current_piece.color;
-    // }
-    // return tempBoard;
-    return TETRIS.game.board
-  },
-
   tic: function(){
-    this.movePieceDownOne();
+    if (TETRIS.game.current_piece.counter >= TETRIS.game.threshold) {
+      this.movePieceDownOne();
+      TETRIS.game.current_piece.counter = 0;
+    }
+    TETRIS.game.current_piece.counter += 10;
     this.deleteFullRows();
   },
-
-  current_piece: {},
 
   deleteFullRows: function(){
     for (var i = 4; i < BOARD_HEIGHT; i++) {
@@ -190,10 +205,26 @@ TETRIS.game = {
       }
       if (markForDelete) {
         TETRIS.game.board.splice(i, 1);
-        TETRIS.game.liftPiece();
         TETRIS.game.addRow();
+        TETRIS.game.threshold -= 10;
+        TETRIS.game.score++;
       }
     }
+  },
+
+  checkForLoss: function() {
+    for (var i = 0; i < BOARD_WIDTH; i++) {
+      if (TETRIS.game.board[FIRST_VISIBLE_ROW - 1][i]) {
+        return true;
+      }
+    }
+
+    return false;
+  },
+
+  over: function() {
+    alert("You lost!");
+    clearInterval(TETRIS.game.loop);
   },
 
   getRandomColor: function () {
@@ -208,14 +239,6 @@ TETRIS.game = {
   addRow: function(){
     var newRow = new Array(BOARD_WIDTH);
     TETRIS.game.board.unshift(newRow);
-  },
-
-  liftPiece: function(){
-    for(var i = 0; i < TETRIS.game.current_piece.blocks.length; i++) {
-        var row = TETRIS.game.current_piece.blocks[i][0];
-        var col = TETRIS.game.current_piece.blocks[i][1];
-        TETRIS.game.board[row][col] = undefined;
-    } 
   }
 
 
