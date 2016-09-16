@@ -1,12 +1,17 @@
-#board{
+#board {
   height: 600px;
   width: 300px;
+  display: inline-block;
 }
 
-.cell{
+.cell {
   width: 28px;
   height: 28px;
   border: 1px solid black;
   display: inline-block;
   margin-bottom: -5px;
+}
+
+#next-pieces {
+  display: inline-block;
 }

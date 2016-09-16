@@ -12,7 +12,7 @@ TETRIS.view = {
     $board = $('#board');
     $board.html("");
 
-    for (var row = FIRST_VISIBLE_ROW; row < board.length; row++) {
+    for (var row = FIRST_VISIBLE_ROW; row < board.length; row++) { 
       for (var col = 0; col < board[row].length; col++){
         var cell = $('<div class="cell"></div>');
         $board.append(cell);
@@ -34,24 +34,31 @@ TETRIS.view = {
 
     //draw next pieces
 
-    // $next = $('#next-pieces');
-    // $next.html("");
-    // nextPieces = TETRIS.game.nextPieces;
-    // for (var i = 0; i < nextPieces.length; i++ ){
+    $next = $('#next-pieces');
+    $next.html("");
+    nextPieces = TETRIS.game.nextPieces;
 
-    //   for (var row = 0; row < 4; row++) {
-    //     for (var col = 0; col < 4; col++){
-    //       var cell = $('<div class="cell"></div>');
-    //       $next.append(cell);
+    for (var i = nextPieces.length - 1; i >= 0; i-- ){
+      $square = $('<div class="futurePiece">');
+      var current_blocks = TETRIS.game.translateShape(0,0,0, nextPieces[i]);
 
-    //       for (var block = 0; block < nextPieces.length; block++) {
-    //           if (nextPieces[block][0] === row && nextPieces[block][1] === col) {
-    //             cell.css('background-color', color);
-    //           }
-    //       }
-    //     }
-    //   }
-    // }
+      for (row = 0; row < 4; row++) {
+        for (col = 0; col < 4; col++){
+          $cell = $('<div class="cell"></div>');
+          $square.append($cell);
+
+          for (block = 0; block < current_blocks.length; block++) {
+              if (current_blocks[block][0] === row && current_blocks[block][1] === col) {
+                $cell.css('background-color', nextPieces[i].color);
+              }
+          }
+        }
+        $square.append($('<br>'));
+      }
+
+      $next.append($square);
+      $next.append($('<br>'));
+    }
 
   }
 
