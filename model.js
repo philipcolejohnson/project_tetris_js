@@ -206,7 +206,7 @@ TETRIS.game = {
       if (markForDelete) {
         TETRIS.game.board.splice(i, 1);
         TETRIS.game.addRow();
-        TETRIS.game.threshold *= 95;
+        TETRIS.game.threshold *= .95;
         TETRIS.game.score++;
       }
     }
